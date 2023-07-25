@@ -8,6 +8,10 @@ from shutil import move
 from file_types import to_file
 
 
+def get_download_folder():
+    return os.path.join(os.path.expanduser("~"), "Downloads")
+
+
 def mv_to_folder(path) -> None:
     file = Path(path)
     if file.suffix[1::].lower() not in to_file.keys():
@@ -45,7 +49,9 @@ def watch_directory(directory_path):
 
 
 if __name__ == "__main__":
-    path = Path(r"C:\Users\joaom\Downloads")
+    # path = Path(r"C:\Users\user\Downloads")
+    path = Path(get_download_folder())
+    print(f"Located Download folder: {path}")
     files_path = path.glob("./*")
     files = [file for file in files_path if file.is_file()]
 
