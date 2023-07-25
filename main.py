@@ -49,12 +49,6 @@ if __name__ == "__main__":
     files_path = path.glob("./*")
     files = [file for file in files_path if file.is_file()]
 
-    """with open("files.txt", "w", encoding="utf-8") as f:
-        for file in files:
-            file_type = to_file[file.suffix[1::].lower()]
-            f.write(
-                f'Path: "{file}", Suffix: {file.suffix}, Type: {file_type}, Parent: {file.parent}, File name: {file.name}\n'
-            )"""
     for file in files:
         if file.suffix[1::] not in to_file.keys():
             print(f"{file.suffix[1::]} is not an accepted file extension.")
@@ -66,6 +60,5 @@ if __name__ == "__main__":
         move(file, final_path.joinpath(file.name))
         print(f"Moved {file} to {final_path.joinpath(file.name)}.")
 
-    # print(files)
     directory_to_watch = path
     watch_directory(directory_to_watch)
