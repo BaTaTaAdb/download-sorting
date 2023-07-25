@@ -1,128 +1,71 @@
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+import time
 import os
 from pathlib import Path, WindowsPath
 from glob import glob
 from shutil import move
-
-path = Path(r"C:\Users\joaom\Downloads").glob("./*")
-files = [file for file in path if file.is_file()]
+from file_types import to_file
 
 
-to_file = {
-    # Images
-    "png": "Image",
-    "jpg": "Image",
-    "jpeg": "Image",
-    "gif": "Image",
-    "bmp": "Image",
-    "tiff": "Image",
-    "svg": "Image",
-    "ico": "Image",
-    "webp": "Image",
-    # Audio
-    "mp3": "Audio",
-    "wav": "Audio",
-    "ogg": "Audio",
-    "wma": "Audio",
-    "flac": "Audio",
-    "aac": "Audio",
-    "m4a": "Audio",
-    # Video
-    "mp4": "Video",
-    "avi": "Video",
-    "mkv": "Video",
-    "mov": "Video",
-    "wmv": "Video",
-    "flv": "Video",
-    "webm": "Video",
-    "3gp": "Video",
-    # Archives
-    "rar": "Archive",
-    "zip": "Archive",
-    "7z": "Archive",
-    "tar": "Archive",
-    "gz": "Archive",
-    "bz2": "Archive",
-    "xz": "Archive",
-    # Executables
-    "exe": "Executable",
-    "msi": "Executable",
-    # Documents
-    "csv": "Document",
-    "json": "Document",
-    "xml": "Document",
-    "pdf": "Document",
-    "doc": "Document",
-    "docx": "Document",
-    "xls": "Document",
-    "xlsx": "Document",
-    "ppt": "Document",
-    "pptx": "Document",
-    "txt": "Document",
-    "rtf": "Document",
-    "log": "Document",
-    "md": "Document",
-    "html": "Document",
-    "htm": "Document",
-    # Code
-    "js": "Code",
-    "py": "Code",
-    "java": "Code",
-    "c": "Code",
-    "cpp": "Code",
-    "h": "Code",
-    "sql": "Code",
-    "php": "Code",
-    "asp": "Code",
-    "jsp": "Code",
-    "bat": "Code",
-    "sh": "Code",
-    "css": "Code",
-    "xml": "Code",
-    "ini": "Code",
-    "cfg": "Code",
-    # Fonts
-    "ttf": "Font",
-    "otf": "Font",
-    "woff": "Font",
-    "woff2": "Font",
-    # Compressed
-    "gz": "Compressed",
-    "bz2": "Compressed",
-    "xz": "Compressed",
-    "z": "Compressed",
-    # Database
-    "sqlite": "Database",
-    "db": "Database",
-    # Miscellaneous
-    "dat": "Miscellaneous",
-    "conf": "Miscellaneous",
-    "dll": "Miscellaneous",
-    "iso": "Miscellaneous",
-    "bin": "Miscellaneous",
-    "pdb": "Miscellaneous",
-    "rpm": "Miscellaneous",
-    "deb": "Miscellaneous",
-}
-
-
-def mv_to_folder(file: WindowsPath) -> None:
+def mv_to_folder(path) -> None:
+    file = Path(path)
+    if file.suffix[1::].lower() not in to_file.keys():
+        print(f"{file.suffix[1::].lower()} is not an accepted file extension.")
+        return
     file_type = to_file[file.suffix[1::]]
     final_path = file.parent.joinpath(file_type)
     if not os.path.exists(final_path):
         os.makedirs(final_path)
     move(file, final_path.joinpath(file.name))
-    print(f"Moved {file} to {final_path.joinpath(file_type)}.")
+    print(f"Moved {file} to {final_path.joinpath(file.name)}.")
 
 
-with open("files.txt", "w") as f:
+class MyHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.is_directory:
+            return
+        print(f"Watchdog detected change: {event.src_path}")
+        mv_to_folder(event.src_path)
+
+
+def watch_directory(directory_path):
+    event_handler = MyHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path=directory_path, recursive=False)
+    observer.start()
+    print(f"Watching directory: {directory_path}")
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+
+if __name__ == "__main__":
+    path = Path(r"C:\Users\joaom\Downloads")
+    files_path = path.glob("./*")
+    files = [file for file in files_path if file.is_file()]
+
+    """with open("files.txt", "w", encoding="utf-8") as f:
+        for file in files:
+            file_type = to_file[file.suffix[1::].lower()]
+            f.write(
+                f'Path: "{file}", Suffix: {file.suffix}, Type: {file_type}, Parent: {file.parent}, File name: {file.name}\n'
+            )"""
     for file in files:
+        if file.suffix[1::] not in to_file.keys():
+            print(f"{file.suffix[1::]} is not an accepted file extension.")
+            continue
         file_type = to_file[file.suffix[1::]]
-        f.write(
-            f'Path: "{file}", Suffix: {file.suffix}, Type: {file_type}, Parent: {file.parent}, File name: {file.name}\n'
-        )
+        final_path = file.parent.joinpath(file_type)
+        if not os.path.exists(final_path):
+            os.makedirs(final_path)
+        move(file, final_path.joinpath(file.name))
+        print(f"Moved {file} to {final_path.joinpath(file.name)}.")
 
-
-print(files)
-for file in files:
-    if file in 
-    mv_to_folder(files)
+    # print(files)
+    directory_to_watch = path
+    watch_directory(directory_to_watch)
